@@ -1,0 +1,7 @@
+name: Model_Kelayakan_Beasiswa
+
+conda_env: conda.yaml
+
+entry_points:
+  main:
+    command: "python modelling.py"
