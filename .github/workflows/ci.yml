@@ -26,7 +26,6 @@ jobs:
       - name: Train Model via MLProject
         run: |
           cd MLProject
-          # Menjalankan proyek menggunakan sistem lokal agar lebih cepat
           mlflow run . --env-manager=local
 
       - name: Save Artifacts to GitHub (Syarat Advance: Simpan Artefak ke Repo)
@@ -38,8 +37,13 @@ jobs:
       - name: Build Docker Image (Syarat Advance: mlflow build-docker)
         run: |
           cd MLProject
-          # Membaca ID Model dari file teks yang kita buat tadi
+          export MLFLOW_TRACKING_URI="file:$(pwd)/mlruns"
           RUN_ID=$(cat run_id.txt)
+          
+          # Trik Fix Bug: Menghapus baris 'python=' dari requirements.txt yang digenerate MLflow
+          sed -i '/python=/d' mlruns/0/$RUN_ID/artifacts/model/requirements.txt || true
+          
+          # Membangun Docker Image
           mlflow models build-docker -m "runs:/$RUN_ID/model" -n ${{ secrets.DOCKER_USERNAME }}/beasiswa-model:latest
 
       - name: Log in to Docker Hub
