@@ -8,6 +8,10 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    
+    # PENTING: Menyuntikkan izin bypass File Store secara global ke lingkungan Linux GitHub
+    env:
+      MLFLOW_ALLOW_FILE_STORE: "true"
 
     steps:
       - name: Checkout Code
@@ -41,11 +45,8 @@ jobs:
           
           RUN_ID=$(cat run_id.txt)
           
-          # Trik Fix Bug Pip "Sapu Bersih"
-          # Mencari SEMUA file requirements.txt di folder mlruns dan menghapus tulisan python=
+          # Trik Fix Bug Pip
           find mlruns -name "requirements.txt" -type f -exec sed -i '/python=/d' {} +
-          
-          # Mencegah error serupa pada file conda.yaml internal milik model
           find mlruns -name "conda.yaml" -type f -exec sed -i '/- python=/d' {} +
           
           # Membangun Docker Image

@@ -1,3 +1,7 @@
+import os
+# Menyuntikkan izin penggunaan file store lokal untuk MLflow versi terbaru
+os.environ["MLFLOW_ALLOW_FILE_STORE"] = "true"
+
 import pandas as pd
 import mlflow
 import mlflow.sklearn
@@ -34,14 +38,14 @@ def main():
             ('cat', Pipeline(steps=[('imputer', SimpleImputer(strategy='most_frequent')), ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False))]), cat_cols)
         ])
     
-    # MENGGUNAKAN PARAMETER TERBAIK DARI HASIL TUNING KRITERIA 2
+    # MENGGUNAKAN PARAMETER TERBAIK
     rf_pipeline = ImbPipeline(steps=[
         ('preprocessor', preprocessor),
         ('smote', SMOTE(random_state=42)),
         ('classifier', RandomForestClassifier(
-            n_estimators=200,          # <-- Parameter Terbaik
-            max_depth=6,               # <-- Parameter Terbaik
-            min_samples_split=10,      # <-- Parameter Terbaik
+            n_estimators=200,          
+            max_depth=6,               
+            min_samples_split=10,      
             class_weight='balanced', 
             random_state=42
         ))
@@ -50,7 +54,6 @@ def main():
     with mlflow.start_run(run_name="CI_Run") as run:
         rf_pipeline.fit(X_train, y_train)
         
-        # Simpan Run ID ke file teks. Ini TRIK PENTING agar GitHub Actions tahu ID modelnya!
         with open("run_id.txt", "w") as f:
             f.write(run.info.run_id)
         
