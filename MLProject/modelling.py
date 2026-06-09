@@ -1,5 +1,4 @@
 import os
-# Menyuntikkan izin penggunaan file store lokal untuk MLflow versi terbaru
 os.environ["MLFLOW_ALLOW_FILE_STORE"] = "true"
 
 import pandas as pd
@@ -14,14 +13,9 @@ from sklearn.ensemble import RandomForestClassifier
 from imblearn.pipeline import Pipeline as ImbPipeline
 from imblearn.over_sampling import SMOTE
 
-# Menyimpan hasil log lokal untuk dibaca oleh Docker saat CI berjalan
-mlflow.set_tracking_uri("file:./mlruns")
-mlflow.set_experiment("CI_Pipeline_Beasiswa")
-
 def main():
     mlflow.sklearn.autolog()
     
-    # Dataset diakses dari dalam folder MLProject
     data_path = 'dataset-kelayakan-beasiswa_preprocessing/dataset_kelayakan_beasiswa_clean.csv'
     df = pd.read_csv(data_path)
     
@@ -38,22 +32,17 @@ def main():
             ('cat', Pipeline(steps=[('imputer', SimpleImputer(strategy='most_frequent')), ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False))]), cat_cols)
         ])
     
-    # MENGGUNAKAN PARAMETER TERBAIK
     rf_pipeline = ImbPipeline(steps=[
         ('preprocessor', preprocessor),
         ('smote', SMOTE(random_state=42)),
-        ('classifier', RandomForestClassifier(
-            n_estimators=200,          
-            max_depth=6,               
-            min_samples_split=10,      
-            class_weight='balanced', 
-            random_state=42
-        ))
+        ('classifier', RandomForestClassifier(n_estimators=200, max_depth=6, min_samples_split=10, class_weight='balanced', random_state=42))
     ])
     
-    with mlflow.start_run(run_name="CI_Run") as run:
+    # Memulai Run (Otomatis meneruskan ID dari MLproject)
+    with mlflow.start_run() as run:
         rf_pipeline.fit(X_train, y_train)
         
+        # Menyimpan Run ID yang asli
         with open("run_id.txt", "w") as f:
             f.write(run.info.run_id)
         
