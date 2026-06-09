@@ -28,22 +28,23 @@ jobs:
           cd MLProject
           mlflow run . --env-manager=local
 
-      - name: Save Artifacts to GitHub (Syarat Advance Simpan Artefak ke Repo)
+      - name: Save Artifacts to GitHub
         uses: actions/upload-artifact@v4
         with:
           name: mlflow-model-artifacts
           path: MLProject/mlruns/
 
-      - name: Build Docker Image (Syarat Advance mlflow build-docker)
+      - name: Build Docker Image
         run: |
           cd MLProject
           export MLFLOW_TRACKING_URI="file:$(pwd)/mlruns"
+          
           RUN_ID=$(cat run_id.txt)
           
-          # Trik Fix Bug: Menghapus baris 'python=' dari requirements.txt yang digenerate MLflow
+          # Trik Fix Bug Pip: Mencegah error 'Invalid requirement python=3.10' saat instalasi Docker
           sed -i '/python=/d' mlruns/0/$RUN_ID/artifacts/model/requirements.txt || true
           
-          # Membangun Docker Image
+          # Membangun Docker Image (Tanpa flag env-manager local)
           mlflow models build-docker -m "runs:/$RUN_ID/model" -n ${{ secrets.DOCKER_USERNAME }}/beasiswa-model:latest
 
       - name: Log in to Docker Hub
