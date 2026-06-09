@@ -28,13 +28,13 @@ jobs:
           cd MLProject
           mlflow run . --env-manager=local
 
-      - name: Save Artifacts to GitHub (Syarat Advance: Simpan Artefak ke Repo)
+      - name: Save Artifacts to GitHub (Syarat Advance Simpan Artefak ke Repo)
         uses: actions/upload-artifact@v4
         with:
           name: mlflow-model-artifacts
           path: MLProject/mlruns/
 
-      - name: Build Docker Image (Syarat Advance: mlflow build-docker)
+      - name: Build Docker Image (Syarat Advance mlflow build-docker)
         run: |
           cd MLProject
           export MLFLOW_TRACKING_URI="file:$(pwd)/mlruns"
