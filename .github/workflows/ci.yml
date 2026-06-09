@@ -1,0 +1,53 @@
+name: CI Workflow and Dockerize
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mlflow pandas scikit-learn imbalanced-learn matplotlib seaborn
+
+      - name: Train Model via MLProject
+        run: |
+          cd MLProject
+          # Menjalankan proyek menggunakan sistem lokal agar lebih cepat
+          mlflow run . --env-manager=local
+
+      - name: Save Artifacts to GitHub (Syarat Advance: Simpan Artefak ke Repo)
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-model-artifacts
+          path: MLProject/mlruns/
+
+      - name: Build Docker Image (Syarat Advance: mlflow build-docker)
+        run: |
+          cd MLProject
+          # Membaca ID Model dari file teks yang kita buat tadi
+          RUN_ID=$(cat run_id.txt)
+          mlflow models build-docker -m "runs:/$RUN_ID/model" -n ${{ secrets.DOCKER_USERNAME }}/beasiswa-model:latest
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push Image to Docker Hub
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/beasiswa-model:latest
