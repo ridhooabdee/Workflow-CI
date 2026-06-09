@@ -41,10 +41,14 @@ jobs:
           
           RUN_ID=$(cat run_id.txt)
           
-          # Trik Fix Bug Pip: Mencegah error 'Invalid requirement python=3.10' saat instalasi Docker
-          sed -i '/python=/d' mlruns/0/$RUN_ID/artifacts/model/requirements.txt || true
+          # Trik Fix Bug Pip "Sapu Bersih"
+          # Mencari SEMUA file requirements.txt di folder mlruns dan menghapus tulisan python=
+          find mlruns -name "requirements.txt" -type f -exec sed -i '/python=/d' {} +
           
-          # Membangun Docker Image (Tanpa flag env-manager local)
+          # Mencegah error serupa pada file conda.yaml internal milik model
+          find mlruns -name "conda.yaml" -type f -exec sed -i '/- python=/d' {} +
+          
+          # Membangun Docker Image
           mlflow models build-docker -m "runs:/$RUN_ID/model" -n ${{ secrets.DOCKER_USERNAME }}/beasiswa-model:latest
 
       - name: Log in to Docker Hub
